@@ -1,0 +1,14 @@
+{
+  "extends": "tslint-config-standard",
+  "rules": {
+    "semicolon": [
+      true,
+      "never"
+    ]
+  },
+  "linterOptions": {
+    "exclude": [
+      "test/**/*"
+    ]
+  }
+}

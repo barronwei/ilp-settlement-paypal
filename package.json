@@ -1,0 +1,36 @@
+{
+  "name": "ilp-settlement-paypal",
+  "version": "0.0.1",
+  "description": "An ILP settlement engine for PayPal",
+  "main": "build/src/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/barronwei/ilp-settlement-paypal.git"
+  },
+  "author": "Barron Wei",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "debug": "^4.1.1",
+    "ioredis": "^4.11.2",
+    "koa": "^2.7.0",
+    "koa-router": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/debug": "^4.1.4",
+    "@types/ioredis": "^4.0.13",
+    "@types/koa": "^2.0.49",
+    "@types/koa-router": "^7.0.42",
+    "@types/mocha": "^5.2.7",
+    "chai": "^4.2.0",
+    "mocha": "^6.1.4",
+    "mocha-typescript": "^1.1.17",
+    "source-map-support": "^0.5.12",
+    "tslint": "^5.18.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.5.3"
+  }
+}
