@@ -5,10 +5,5 @@
       true,
       "never"
     ]
-  },
-  "linterOptions": {
-    "exclude": [
-      "test/**/*"
-    ]
   }
 }
