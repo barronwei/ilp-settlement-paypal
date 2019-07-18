@@ -17,10 +17,10 @@ export interface PayPalEngineConfig {
   address: string
   secret: string
 
-  redis: Redis
-
   assetScale: number
   prefix?: string
+
+  redis: Redis
 
   ppClient: PayPal.Payment
   ppUri: string
@@ -35,10 +35,10 @@ export class PayPalSettlementEngine {
   address: string
   secret: string
 
-  redis: Redis
-
   assetScale: number
   prefix: string
+
+  redis: Redis
 
   ppClient: PayPal.Payment
   minDrops: number
@@ -82,5 +82,6 @@ export class PayPalSettlementEngine {
 
   public async close () {
     console.log('Shutting down')
+    this.server.close()
   }
 }
