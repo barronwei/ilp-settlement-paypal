@@ -1,5 +1,4 @@
 import { Context } from 'koa'
-import { Redis } from 'ioredis'
 import { Account } from '../models/account'
 
 export async function create (ctxt: Context) {
