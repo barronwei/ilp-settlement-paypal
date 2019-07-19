@@ -1,8 +1,8 @@
 import { Context } from 'koa'
 import { Account } from '../models/account'
 
-export async function create (ctxt: Context) {
-  const { prefix, redis, request } = ctxt
+export async function create (ctx: Context) {
+  const { prefix, redis, request } = ctx
   const { id, email } = request.body
   const account: Account = {
     id,
@@ -14,25 +14,25 @@ export async function create (ctxt: Context) {
       `${prefix}:accounts:${account.id}`,
       JSON.stringify(account)
     )
-    ctxt.status = 200
+    ctx.status = 200
   } else {
-    ctxt.status = 404
+    ctx.status = 404
   }
 }
 
-export async function search (ctxt: Context) {
-  const { params, prefix, redis } = ctxt
+export async function search (ctx: Context) {
+  const { params, prefix, redis } = ctx
   const account = await redis.get(`${prefix}:accounts:${params.id}`)
   if (account) {
-    ctxt.body = JSON.parse(account)
-    ctxt.status = 200
+    ctx.body = JSON.parse(account)
+    ctx.status = 200
   } else {
-    ctxt.status = 404
+    ctx.status = 404
   }
 }
 
-export async function remove (ctxt: Context) {
-  const { params, prefix, redis } = ctxt
+export async function remove (ctx: Context) {
+  const { params, prefix, redis } = ctx
   await redis.del(`${prefix}:accounts:${params.id}`)
-  ctxt.status = 200
+  ctx.status = 200
 }
