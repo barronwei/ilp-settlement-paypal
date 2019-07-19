@@ -17,72 +17,82 @@ import { create as createMessage } from './controllers/message'
 import { create as createSettlement } from './controllers/settlement'
 
 // PayPal SDK mode
-const CURRENT_MODE = 'sandbox'
+const DEFAULT_MODE = 'sandbox'
 
+const DEFAULT_HOST = 'localhost'
 const DEFAULT_PORT = 3000
 const DEFAULT_PREFIX = 'pp'
-const DEFAULT_MIN_DROPS = 10000
+const DEFAULT_CURRENCY = 'USD'
+const DEFAULT_MIN_CENTS = 1000000
 
 export interface PayPalEngineConfig {
-  connectorUrl: string
+  host?: string
   port?: number
 
-  address: string
+  connectorUrl: string
+  redis: Redis
+
+  email: string
+  client: string
   secret: string
 
   assetScale: number
   prefix?: string
 
-  redis: Redis
-
-  ppClient: PayPal.Payment
-  minDrops?: number
+  minCents?: number
+  currency?: string
 }
 
 export class PayPalSettlementEngine {
   app: Koa
-  connectorUrl: string
+  host: string
   port: number
 
-  address: string
+  server: Server
+  router: Router
+
+  redis: Redis
+  connectorUrl: string
+
+  email: string
+  client: string
   secret: string
 
   assetScale: number
   prefix: string
 
-  redis: Redis
-
-  ppClient: PayPal.Payment
-  minDrops: number
-
-  router: Router
-  server: Server
+  minCents: number
+  currency: string
 
   constructor (config: PayPalEngineConfig) {
     this.app = new Koa()
-    this.app.use(async (ctxt, next) => {
-      if (ctxt.path.includes('messages')) ctxt.disableBodyParser = true
+    this.app.use(async (ctx, next) => {
+      if (ctx.path.includes('messages')) ctx.disableBodyParser = true
       await next()
     })
     this.app.use(bodyParser())
 
+    this.host = config.host || DEFAULT_HOST
     this.port = config.port || DEFAULT_PORT
+
     this.connectorUrl = config.connectorUrl
-
-    this.address = config.address
-    this.secret = config.secret
-
     this.redis = config.redis
+
+    this.email = config.email
+    this.client = config.client
+    this.secret = config.secret
 
     this.assetScale = config.assetScale
     this.prefix = config.prefix || DEFAULT_PREFIX
 
-    this.ppClient = config.ppClient
-    this.minDrops = config.minDrops || DEFAULT_MIN_DROPS
+    this.minCents = config.minCents || DEFAULT_MIN_CENTS
+    this.currency = config.currency || DEFAULT_CURRENCY
 
+    this.app.context.host = this.host
+    this.app.context.port = this.port
     this.app.context.redis = this.redis
+    this.app.context.email = this.email
     this.app.context.prefix = this.prefix
-    this.app.context.address = this.address
 
     // Routes
 
@@ -93,15 +103,15 @@ export class PayPalSettlementEngine {
     // PayPal
 
     PayPal.configure({
-      mode: CURRENT_MODE,
-      client_id: this.address,
+      mode: DEFAULT_MODE,
+      client_id: this.client,
       client_secret: this.secret
     })
   }
 
   public async start () {
     console.log('Starting to listen on', this.port)
-    this.server = this.app.listen(this.port)
+    this.server = this.app.listen(this.port, this.host)
   }
 
   public async close () {
@@ -109,19 +119,18 @@ export class PayPalSettlementEngine {
     this.server.close()
   }
 
-  async findAccountMiddleware (ctxt: Koa.Context, next: () => Promise<any>) {
-    const account = await ctxt.redis.get(
-      `${ctxt.prefix}:accounts:${ctxt.params.id}`
-    )
-    account ? (ctxt.account = JSON.parse(account)) : ctxt.throw(404)
+  async findAccountMiddleware (ctx: Koa.Context, next: () => Promise<any>) {
+    const { params, prefix, redis } = ctx
+    const account = await redis.get(`${prefix}:accounts:${params.id}`)
+    account ? (ctx.account = JSON.parse(account)) : ctx.throw(404)
     await next()
   }
 
   private setupRoutes () {
     // Accounts
-    this.router.post('/accounts', ctxt => createAccount(ctxt))
-    this.router.get('/accounts/:id', ctxt => searchAccount(ctxt))
-    this.router.delete('/accounts/:id', ctxt => removeAccount(ctxt))
+    this.router.post('/accounts', ctx => createAccount(ctx))
+    this.router.get('/accounts/:id', ctx => searchAccount(ctx))
+    this.router.delete('/accounts/:id', ctx => removeAccount(ctx))
 
     // Messages
     this.router.post(
