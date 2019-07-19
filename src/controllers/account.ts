@@ -20,7 +20,7 @@ export async function create (ctxt: Context) {
   }
 }
 
-export async function query (ctxt: Context) {
+export async function search (ctxt: Context) {
   const account = await ctxt.redis.get(
     `${ctxt.prefix}:accounts:${ctxt.params.id}`
   )
@@ -32,7 +32,7 @@ export async function query (ctxt: Context) {
   }
 }
 
-export async function destroy (ctxt: Context) {
+export async function remove (ctxt: Context) {
   await ctxt.redis.del(`${ctxt.prefix}:accounts:${ctxt.params.id}`)
   ctxt.status = 200
 }
