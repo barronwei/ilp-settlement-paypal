@@ -2,16 +2,16 @@ import { Context } from 'koa'
 import { Account } from '../models/account'
 
 export async function create (ctxt: Context) {
-  const body = ctxt.request.body
+  const { prefix, redis, request } = ctxt
+  const { id, email } = request.body
   const account: Account = {
-    id: body.id
+    id,
+    email
   }
-  const existingAccount = await ctxt.redis.get(
-    `${ctxt.prefix}:accounts:${account.id}`
-  )
+  const existingAccount = await redis.get(`${prefix}:accounts:${account.id}`)
   if (!existingAccount) {
-    await ctxt.redis.set(
-      `${ctxt.prefix}:accounts:${account.id}`,
+    await redis.set(
+      `${prefix}:accounts:${account.id}`,
       JSON.stringify(account)
     )
     ctxt.status = 200
@@ -21,9 +21,8 @@ export async function create (ctxt: Context) {
 }
 
 export async function search (ctxt: Context) {
-  const account = await ctxt.redis.get(
-    `${ctxt.prefix}:accounts:${ctxt.params.id}`
-  )
+  const { params, prefix, redis } = ctxt
+  const account = await redis.get(`${prefix}:accounts:${params.id}`)
   if (account) {
     ctxt.body = JSON.parse(account)
     ctxt.status = 200
@@ -33,6 +32,7 @@ export async function search (ctxt: Context) {
 }
 
 export async function remove (ctxt: Context) {
-  await ctxt.redis.del(`${ctxt.prefix}:accounts:${ctxt.params.id}`)
+  const { params, prefix, redis } = ctxt
+  await redis.del(`${prefix}:accounts:${params.id}`)
   ctxt.status = 200
 }
