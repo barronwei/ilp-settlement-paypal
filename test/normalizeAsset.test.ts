@@ -1,9 +1,6 @@
 import 'mocha'
-import * as Chai from 'chai'
-import * as Sinon from 'sinon'
+import { assert } from 'chai'
 import { normalizeAsset } from '../src/utils/normalizeAsset'
-
-const assert = Object.assign(Chai.assert, Sinon.assert)
 
 describe('Normalize Asset', function () {
   it('converts from low scale to higher scale', async () => {
