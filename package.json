@@ -20,6 +20,7 @@
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0",
     "paypal-rest-sdk": "^1.8.1",
+    "raw-body": "^2.4.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
