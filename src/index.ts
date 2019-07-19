@@ -120,7 +120,7 @@ export class PayPalSettlementEngine {
   private setupRoutes () {
     // Accounts
     this.router.post('/accounts', ctxt => createAccount(ctxt))
-    this.router.get('/accounts/:id', ctxt => queryAccount(ctxt))
+    this.router.get('/accounts/:id', ctxt => searchAccount(ctxt))
     this.router.delete('/accounts/:id', ctxt => removeAccount(ctxt))
 
     // Messages
