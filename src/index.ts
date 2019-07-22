@@ -88,8 +88,6 @@ export class PayPalSettlementEngine {
     this.minCents = config.minCents || DEFAULT_MIN_CENTS
     this.currency = config.currency || DEFAULT_CURRENCY
 
-    this.app.context.host = this.host
-    this.app.context.port = this.port
     this.app.context.redis = this.redis
     this.app.context.ppEmail = this.ppEmail
     this.app.context.prefix = this.prefix
@@ -145,5 +143,68 @@ export class PayPalSettlementEngine {
       this.findAccountMiddleware,
       createSettlement
     )
+  }
+
+  async getPaymentDetails (accountId: string) {
+    const url = `${this.connectorUrl}\\accounts\\${accountId}\\messages`
+    const message = {
+      type: 'paymentDetails'
+    }
+    const details = await axios.post(
+      url,
+      Buffer.from(JSON.stringify(message)),
+      {
+        timeout: 10000,
+        headers: {
+          'Content-type': 'application/octet-stream',
+          'Idempotency-Key': uuidv4()
+        }
+      }
+    )
+    return details.data
+  }
+
+  async settleAccount (account: Account, cents: string) {
+    const { id, ppEmail } = account
+    console.log(`Attempting to send ${cents} cents to account: ${id}`)
+    try {
+      const details = await this.getPaymentDetails(id).catch(error => {
+        console.error(`Error getting payment details from counterparty`, error)
+        throw error
+      })
+      const { ppEmail, destinationTag } = details
+      const payment = {
+        sender_batch_header: {
+          sender_batch_id: uuidv4(),
+          email_subject: `ILP Settlement from ${this.ppEmail}`,
+          email_message: `Payout of ${cents} cents under ${destinationTag}!`
+        },
+        items: [
+          {
+            recipient_type: 'EMAIL',
+            amount: {
+              value: cents,
+              currency: this.currency
+            },
+            note: `Settlement from ${
+              this.ppEmail
+            } to ${ppEmail} (${destinationTag})`,
+            receiver: ppEmail
+          }
+        ]
+      }
+      PayPal.payout.create(payment, true, (err: any, pay: any) => {
+        if (err) {
+          console.error(`Failed to initiate PayPal payment:`, err)
+        } else {
+          console.log(`Created PayPal payment for approval:`, pay)
+        }
+      })
+    } catch (error) {
+      console.error(
+        `Settlement to ${ppEmail} for ${cents} cents failed:`,
+        error
+      )
+    }
   }
 }

@@ -1,12 +1,9 @@
-import * as PayPal from 'paypal-rest-sdk'
 import * as getRawBody from 'raw-body'
 import { Context } from 'koa'
 import { randomBytes } from 'crypto'
 
 export interface Message {
   type: string
-  total: string
-  currency: string
   data: any
 }
 
@@ -25,8 +22,8 @@ export async function create (ctx: Context) {
 }
 
 async function handleMessage (message: Message, ctx: Context) {
-  const { type, total, currency } = message
-  const { params, prefix, redis, ppEmail, host, port } = ctx
+  const { type } = message
+  const { params, prefix, redis, ppEmail } = ctx
   const accountId: string = params.id
   switch (type) {
     case 'paymentDetails':
@@ -48,32 +45,6 @@ async function handleMessage (message: Message, ctx: Context) {
         ppEmail,
         destinationTag
       }
-      const paymentRequest = {
-        intent: 'sale',
-        payer: {
-          payment_method: 'paypal'
-        },
-        redirect_urls: {
-          return_url: `http://${host}:${port}/accept`,
-          cancel_url: `http://${host}:${port}/reject`
-        },
-        transactions: [
-          {
-            amount: {
-              total,
-              currency
-            },
-            description: `Payment from ${accountId} under ${destinationTag}!`
-          }
-        ]
-      }
-      PayPal.payment.create(paymentRequest, (err, pay) => {
-        if (err) {
-          console.error(`Failed to initiate PayPal payment:`, err)
-        } else {
-          console.log(`Created PayPal payment for approval:`, pay)
-        }
-      })
       return Buffer.from(JSON.stringify(paymentDetails))
     default:
       throw new Error('This message type is unknown.')
