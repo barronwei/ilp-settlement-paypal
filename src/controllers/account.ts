@@ -3,10 +3,10 @@ import { Account } from '../models/account'
 
 export async function create (ctx: Context) {
   const { prefix, redis, request } = ctx
-  const { id, email } = request.body
+  const { id, ppEmail } = request.body
   const account: Account = {
     id,
-    email
+    ppEmail
   }
   const existingAccount = await redis.get(`${prefix}:accounts:${account.id}`)
   if (!existingAccount) {
