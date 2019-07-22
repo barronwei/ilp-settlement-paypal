@@ -97,6 +97,13 @@ export class PayPalSettlementEngine {
     this.router = new Router()
     this.setupRoutes()
     this.app.use(this.router.routes())
+  }
+
+  public async start () {
+    console.log('Starting to listen on', this.port)
+    this.server = this.app.listen(this.port, this.host)
+
+    console.log('Configuring PayPal')
 
     // PayPal
 
@@ -107,15 +114,12 @@ export class PayPalSettlementEngine {
     })
   }
 
-  public async start () {
-    console.log('Starting to listen on', this.port)
-    this.server = this.app.listen(this.port, this.host)
-  }
-
   public async close () {
     console.log('Shutting down')
     this.server.close()
   }
+
+  private async subscribeToTransactions () {}
 
   async findAccountMiddleware (ctx: Koa.Context, next: () => Promise<any>) {
     const { params, prefix, redis } = ctx
@@ -169,7 +173,7 @@ export class PayPalSettlementEngine {
     console.log(`Attempting to send ${cents} cents to account: ${id}`)
     try {
       const details = await this.getPaymentDetails(id).catch(error => {
-        console.error(`Error getting payment details from counterparty`, error)
+        console.error('Error getting payment details from counterparty', error)
         throw error
       })
       const { ppEmail, destinationTag } = details
@@ -195,9 +199,9 @@ export class PayPalSettlementEngine {
       }
       PayPal.payout.create(payment, true, (err: any, pay: any) => {
         if (err) {
-          console.error(`Failed to initiate PayPal payment:`, err)
+          console.error('Failed to initiate PayPal payment:', err)
         } else {
-          console.log(`Created PayPal payment for approval:`, pay)
+          console.log('Created PayPal payment for approval:', pay)
         }
       })
     } catch (error) {
