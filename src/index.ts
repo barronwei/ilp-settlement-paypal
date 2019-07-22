@@ -16,18 +16,20 @@ import {
 import { create as createMessage } from './controllers/message'
 import { create as createSettlement } from './controllers/settlement'
 
-// PayPal SDK mode
-const DEFAULT_MODE = 'sandbox'
-
 const DEFAULT_HOST = 'localhost'
 const DEFAULT_PORT = 3000
-const DEFAULT_PREFIX = 'pp'
+
+// PayPal SDK mode
+const DEFAULT_MODE = 'sandbox'
+const DEFAULT_PREFIX = 'paypal'
+
 const DEFAULT_CURRENCY = 'USD'
 const DEFAULT_MIN_CENTS = 1000000
 
 export interface PayPalEngineConfig {
   host?: string
   port?: number
+  mode?: string
 
   connectorUrl: string
   redis: Redis
@@ -47,6 +49,7 @@ export class PayPalSettlementEngine {
   app: Koa
   host: string
   port: number
+  mode: string
 
   server: Server
   router: Router
@@ -74,6 +77,7 @@ export class PayPalSettlementEngine {
 
     this.host = config.host || DEFAULT_HOST
     this.port = config.port || DEFAULT_PORT
+    this.mode = config.mode || DEFAULT_MODE
 
     this.connectorUrl = config.connectorUrl
     this.redis = config.redis
@@ -103,12 +107,11 @@ export class PayPalSettlementEngine {
     console.log('Starting to listen on', this.port)
     this.server = this.app.listen(this.port, this.host)
 
-    console.log('Configuring PayPal')
+    console.log(`Starting PayPal in ${this.mode} mode!`)
 
     // PayPal
-
     PayPal.configure({
-      mode: DEFAULT_MODE,
+      mode: this.mode,
       client_id: this.clientId,
       client_secret: this.secret
     })
