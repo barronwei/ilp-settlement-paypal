@@ -15,6 +15,7 @@ import {
 } from './controllers/account'
 import { create as createMessage } from './controllers/message'
 import { create as createSettlement } from './controllers/settlement'
+import { listen as listenWebhook } from './controllers/webhook'
 
 const DEFAULT_HOST = 'localhost'
 const DEFAULT_PORT = 3000
@@ -115,6 +116,8 @@ export class PayPalSettlementEngine {
       client_id: this.clientId,
       client_secret: this.secret
     })
+
+    await this.subscribeToTransactions()
   }
 
   public async close () {
@@ -122,7 +125,23 @@ export class PayPalSettlementEngine {
     this.server.close()
   }
 
-  private async subscribeToTransactions () {}
+  private async subscribeToTransactions () {
+    const webhooks = {
+      url: `http://${this.host}:${this.port}/webhooks`,
+      event_types: [
+        {
+          name: 'PAYMENT.PAYOUTSBATCH.SUCCESS'
+        }
+      ]
+    }
+    PayPal.notification.webhook.create(webhooks, (err, res) => {
+      if (res) {
+        console.log('Initiated webhooks to listening:', res)
+      } else {
+        console.error('Failed to initialize webhooks:', err)
+      }
+    })
+  }
 
   async findAccountMiddleware (ctx: Koa.Context, next: () => Promise<any>) {
     const { params, prefix, redis } = ctx
@@ -150,6 +169,9 @@ export class PayPalSettlementEngine {
       this.findAccountMiddleware,
       createSettlement
     )
+
+    // Webhooks
+    this.router.post('/webhooks', ctx => listenWebhook(ctx))
   }
 
   async getPaymentDetails (accountId: string) {
@@ -200,11 +222,11 @@ export class PayPalSettlementEngine {
           }
         ]
       }
-      PayPal.payout.create(payment, true, (err: any, pay: any) => {
-        if (err) {
-          console.error('Failed to initiate PayPal payment:', err)
-        } else {
+      PayPal.payout.create(payment, (err: any, pay: any) => {
+        if (pay) {
           console.log('Created PayPal payment for approval:', pay)
+        } else {
+          console.error('Failed to initiate PayPal payment:', err)
         }
       })
     } catch (err) {
