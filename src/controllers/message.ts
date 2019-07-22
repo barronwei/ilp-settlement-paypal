@@ -47,6 +47,6 @@ async function handleMessage (message: Message, ctx: Context) {
       }
       return Buffer.from(JSON.stringify(paymentDetails))
     default:
-      throw new Error('This message type is unknown.')
+      throw new Error(`This message type ${type} is unknown.`)
   }
 }
