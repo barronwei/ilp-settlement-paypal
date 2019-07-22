@@ -175,9 +175,9 @@ export class PayPalSettlementEngine {
     const { id, ppEmail } = account
     console.log(`Attempting to send ${cents} cents to account: ${id}`)
     try {
-      const details = await this.getPaymentDetails(id).catch(error => {
-        console.error('Error getting payment details from counterparty', error)
-        throw error
+      const details = await this.getPaymentDetails(id).catch(err => {
+        console.error('Error getting payment details from counterparty', err)
+        throw err
       })
       const { ppEmail, destinationTag } = details
       const payment = {
@@ -207,11 +207,8 @@ export class PayPalSettlementEngine {
           console.log('Created PayPal payment for approval:', pay)
         }
       })
-    } catch (error) {
-      console.error(
-        `Settlement to ${ppEmail} for ${cents} cents failed:`,
-        error
-      )
+    } catch (err) {
+      console.error(`Settlement to ${ppEmail} for ${cents} cents failed:`, err)
     }
   }
 }
