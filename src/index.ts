@@ -32,8 +32,8 @@ export interface PayPalEngineConfig {
   connectorUrl: string
   redis: Redis
 
-  email: string
-  client: string
+  ppEmail: string
+  clientId: string
   secret: string
 
   assetScale: number
@@ -54,8 +54,8 @@ export class PayPalSettlementEngine {
   redis: Redis
   connectorUrl: string
 
-  email: string
-  client: string
+  ppEmail: string
+  clientId: string
   secret: string
 
   assetScale: number
@@ -78,8 +78,8 @@ export class PayPalSettlementEngine {
     this.connectorUrl = config.connectorUrl
     this.redis = config.redis
 
-    this.email = config.email
-    this.client = config.client
+    this.ppEmail = config.ppEmail
+    this.clientId = config.clientId
     this.secret = config.secret
 
     this.assetScale = config.assetScale
@@ -91,7 +91,7 @@ export class PayPalSettlementEngine {
     this.app.context.host = this.host
     this.app.context.port = this.port
     this.app.context.redis = this.redis
-    this.app.context.email = this.email
+    this.app.context.ppEmail = this.ppEmail
     this.app.context.prefix = this.prefix
 
     // Routes
@@ -104,7 +104,7 @@ export class PayPalSettlementEngine {
 
     PayPal.configure({
       mode: DEFAULT_MODE,
-      client_id: this.client,
+      client_id: this.clientId,
       client_secret: this.secret
     })
   }
