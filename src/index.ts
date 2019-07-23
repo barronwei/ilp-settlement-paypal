@@ -17,33 +17,34 @@ import { create as createMessage } from './controllers/message'
 import { create as createSettlement } from './controllers/settlement'
 
 const DEFAULT_HOST = 'localhost'
-const DEFAULT_PORT = '3000'
+const DEFAULT_PORT = 3000
 
-const DEFAULT_REDIS_PORT = '6379'
+const DEFAULT_REDIS_PORT = 6379
 
 // PayPal SDK mode
 const DEFAULT_MODE = 'sandbox'
-const DEFAULT_PREFIX = 'paypal'
 
-const DEFAULT_CURRENCY = 'USD'
+const DEFAULT_PREFIX = 'paypal'
+const DEFAULT_ASSET_SCALE = 2
 const DEFAULT_MIN_CENTS = 1000000
+const DEFAULT_CURRENCY = 'USD'
 
 export interface PayPalEngineConfig {
   host?: string
-  port?: string
+  port?: number
   mode?: string
 
   connectorUrl: string
-  redisPort?: string
-  redis: ioredis.Redis
+
+  redisPort?: number
+  redis?: ioredis.Redis
 
   ppEmail: string
   clientId: string
   secret: string
 
-  assetScale: number
   prefix?: string
-
+  assetScale?: number
   minCents?: number
   currency?: string
 }
@@ -51,23 +52,23 @@ export interface PayPalEngineConfig {
 export class PayPalSettlementEngine {
   app: Koa
   host: string
-  port: string
+  port: number
   mode: string
 
   server: Server
   router: Router
 
   connectorUrl: string
-  redisPort: string
+
+  redisPort: number
   redis: ioredis.Redis
 
   ppEmail: string
   clientId: string
   secret: string
 
-  assetScale: number
   prefix: string
-
+  assetScale: number
   minCents: number
   currency: string
 
@@ -84,6 +85,7 @@ export class PayPalSettlementEngine {
     this.mode = config.mode || DEFAULT_MODE
 
     this.connectorUrl = config.connectorUrl
+
     this.redisPort = config.redisPort || DEFAULT_REDIS_PORT
     this.redis = config.redis || new ioredis(this.redisPort)
 
@@ -91,9 +93,8 @@ export class PayPalSettlementEngine {
     this.clientId = config.clientId
     this.secret = config.secret
 
-    this.assetScale = config.assetScale
     this.prefix = config.prefix || DEFAULT_PREFIX
-
+    this.assetScale = config.assetScale || DEFAULT_ASSET_SCALE
     this.minCents = config.minCents || DEFAULT_MIN_CENTS
     this.currency = config.currency || DEFAULT_CURRENCY
 
