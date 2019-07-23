@@ -20,16 +20,13 @@ export async function create (ctx: Context) {
 }
 
 async function handleMessage (message: Message, ctx: Context) {
-  const { type } = message
-  const { params, prefix, redis, ppEmail } = ctx
-  const accountId: string = params.id
-  switch (type) {
+  switch (message.type) {
     case 'paymentDetails':
       const paymentDetails: PaymentDetailsMessage = {
-        ppEmail
+        ppEmail: ctx.ppEmail
       }
       return Buffer.from(JSON.stringify(paymentDetails))
     default:
-      throw new Error(`This message type ${type} is unknown.`)
+      throw new Error(`This message type ${message.type} is unknown.`)
   }
 }
