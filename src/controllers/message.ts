@@ -1,6 +1,5 @@
 import * as getRawBody from 'raw-body'
 import { Context } from 'koa'
-import { randomBytes } from 'crypto'
 
 export interface Message {
   type: string
@@ -9,7 +8,6 @@ export interface Message {
 
 export interface PaymentDetailsMessage {
   ppEmail: string
-  destinationTag: number
 }
 
 export async function create (ctx: Context) {
@@ -27,23 +25,8 @@ async function handleMessage (message: Message, ctx: Context) {
   const accountId: string = params.id
   switch (type) {
     case 'paymentDetails':
-      const tag = await redis.get(
-        `${prefix}:accountId:${accountId}:destinationTag`
-      )
-      const destinationTag: number = tag || randomBytes(4).readUInt32BE(0)
-      if (!tag) {
-        await redis.set(
-          `${prefix}:destinationTag:${destinationTag}:accountId`,
-          accountId
-        )
-        await redis.set(
-          `${prefix}:accountId:${accountId}:destinationTag`,
-          destinationTag
-        )
-      }
       const paymentDetails: PaymentDetailsMessage = {
-        ppEmail,
-        destinationTag
+        ppEmail
       }
       return Buffer.from(JSON.stringify(paymentDetails))
     default:
