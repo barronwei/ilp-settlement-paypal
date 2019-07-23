@@ -15,7 +15,6 @@ import {
 } from './controllers/account'
 import { create as createMessage } from './controllers/message'
 import { create as createSettlement } from './controllers/settlement'
-import { listen as listenWebhook } from './controllers/webhook'
 
 const DEFAULT_HOST = 'localhost'
 const DEFAULT_PORT = 3000
@@ -108,15 +107,15 @@ export class PayPalSettlementEngine {
     console.log('Starting to listen on', this.port)
     this.server = this.app.listen(this.port, this.host)
 
-    console.log(`Starting PayPal in ${this.mode} mode!`)
-
     // PayPal
+    console.log(`Starting PayPal in ${this.mode} mode!`)
     PayPal.configure({
       mode: this.mode,
       client_id: this.clientId,
       client_secret: this.secret
     })
 
+    // Webhooks
     await this.subscribeToTransactions()
   }
 
@@ -127,7 +126,7 @@ export class PayPalSettlementEngine {
 
   private async subscribeToTransactions () {
     const webhooks = {
-      url: `http://${this.host}:${this.port}/webhooks`,
+      url: `http://${this.host}:${this.port}/${this.clientId}/webhooks`,
       event_types: [
         {
           name: 'PAYMENT.PAYOUTSBATCH.SUCCESS'
@@ -136,9 +135,9 @@ export class PayPalSettlementEngine {
     }
     PayPal.notification.webhook.create(webhooks, (err, res) => {
       if (res) {
-        console.log('Initiated webhooks to listening:', res)
+        console.log(`Initiated webhooks to listening at ${webhooks.url}:`, res)
       } else {
-        console.error('Failed to initialize webhooks:', err)
+        console.error(`Failed to initialize webhooks at ${webhooks.url}:`, err)
       }
     })
   }
@@ -171,7 +170,11 @@ export class PayPalSettlementEngine {
     )
 
     // Webhooks
-    this.router.post('/webhooks', ctx => listenWebhook(ctx))
+    this.router.post(
+      '/accounts/:id/webhooks',
+      this.findAccountMiddleware,
+      this.handleTransaction
+    )
   }
 
   async getPaymentDetails (accountId: string) {
