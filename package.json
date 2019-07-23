@@ -5,6 +5,7 @@
   "main": "build/index.js",
   "scripts": {
     "start": "tsc && node build/launch.js",
+    "debug": "tsc && DEBUG=* node build/launch.js",
     "build": "tsc"
   },
   "repository": {
@@ -19,6 +20,7 @@
     "koa": "^2.7.0",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0",
+    "ngrok": "^3.2.3",
     "paypal-rest-sdk": "^1.8.1",
     "raw-body": "^2.4.1",
     "uuid": "^3.3.2"
