@@ -6,10 +6,6 @@ export interface Message {
   data: any
 }
 
-export interface PaymentDetailsMessage {
-  ppEmail: string
-}
-
 export async function create (ctx: Context) {
   const buffer = await getRawBody(ctx.req)
   const message: Message = JSON.parse(buffer.toString())
@@ -20,13 +16,11 @@ export async function create (ctx: Context) {
 }
 
 async function handleMessage (message: Message, ctx: Context) {
-  switch (message.type) {
+  const { type } = message
+  switch (type) {
     case 'paymentDetails':
-      const paymentDetails: PaymentDetailsMessage = {
-        ppEmail: ctx.ppEmail
-      }
-      return Buffer.from(JSON.stringify(paymentDetails))
+      return Buffer.from(ctx.ppEmail)
     default:
-      throw new Error(`This message type ${message.type} is unknown.`)
+      throw new Error(`This message type ${type} is unknown.`)
   }
 }
