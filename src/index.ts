@@ -2,8 +2,8 @@ import * as PayPal from 'paypal-rest-sdk'
 import * as Koa from 'koa'
 import * as Router from 'koa-router'
 import * as bodyParser from 'koa-bodyparser'
+import * as ioredis from 'ioredis'
 import axios from 'axios'
-import { Redis } from 'ioredis'
 import { Server } from 'net'
 import { Account } from './models/account'
 import { v4 as uuidv4 } from 'uuid'
@@ -17,7 +17,9 @@ import { create as createMessage } from './controllers/message'
 import { create as createSettlement } from './controllers/settlement'
 
 const DEFAULT_HOST = 'localhost'
-const DEFAULT_PORT = 3000
+const DEFAULT_PORT = '3000'
+
+const DEFAULT_REDIS_PORT = '6379'
 
 // PayPal SDK mode
 const DEFAULT_MODE = 'sandbox'
@@ -28,11 +30,12 @@ const DEFAULT_MIN_CENTS = 1000000
 
 export interface PayPalEngineConfig {
   host?: string
-  port?: number
+  port?: string
   mode?: string
 
   connectorUrl: string
-  redis: Redis
+  redisPort?: string
+  redis: ioredis.Redis
 
   ppEmail: string
   clientId: string
@@ -48,14 +51,15 @@ export interface PayPalEngineConfig {
 export class PayPalSettlementEngine {
   app: Koa
   host: string
-  port: number
+  port: string
   mode: string
 
   server: Server
   router: Router
 
-  redis: Redis
   connectorUrl: string
+  redisPort: string
+  redis: ioredis.Redis
 
   ppEmail: string
   clientId: string
@@ -80,7 +84,8 @@ export class PayPalSettlementEngine {
     this.mode = config.mode || DEFAULT_MODE
 
     this.connectorUrl = config.connectorUrl
-    this.redis = config.redis
+    this.redisPort = config.redisPort || DEFAULT_REDIS_PORT
+    this.redis = config.redis || new ioredis(this.redisPort)
 
     this.ppEmail = config.ppEmail
     this.clientId = config.clientId
@@ -105,7 +110,7 @@ export class PayPalSettlementEngine {
 
   public async start () {
     console.log('Starting to listen on', this.port)
-    this.server = this.app.listen(this.port, this.host)
+    this.server = this.app.listen(Number(this.port), this.host)
 
     // PayPal
     console.log(`Starting PayPal in ${this.mode} mode!`)
