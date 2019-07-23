@@ -126,13 +126,16 @@ export class PayPalSettlementEngine {
   }
 
   public async close () {
-    console.log('Shutting down')
+    console.log('Shutting down!')
     this.server.close()
   }
 
   private async subscribeToTransactions () {
+    const url = `https://${this.host}:${this.port}/accounts/${
+      this.clientId
+    }/webhooks`
     const webhooks = {
-      url: `http://${this.host}:${this.port}/${this.clientId}/webhooks`,
+      url,
       event_types: [
         {
           name: 'PAYMENT.PAYOUTSBATCH.SUCCESS'
@@ -141,9 +144,9 @@ export class PayPalSettlementEngine {
     }
     PayPal.notification.webhook.create(webhooks, (err, res) => {
       if (res) {
-        console.log(`Initiated webhooks to listening at ${webhooks.url}:`, res)
+        console.log(`Initiated webhooks to listening at ${webhooks.url}`)
       } else {
-        console.error(`Failed to initialize webhooks at ${webhooks.url}:`, err)
+        console.error(`Failed to start webhooks at ${webhooks.url}`, err)
       }
     })
   }
@@ -241,5 +244,9 @@ export class PayPalSettlementEngine {
     } catch (err) {
       console.error(`Settlement to ${ppEmail} for ${cents} cents failed:`, err)
     }
+  }
+
+  private async handleTransaction (tx: any) {
+    console.log(tx)
   }
 }
