@@ -2,8 +2,9 @@
   "name": "ilp-settlement-paypal",
   "version": "0.0.1",
   "description": "An ILP settlement engine for PayPal",
-  "main": "build/src/index.js",
+  "main": "build/index.js",
   "scripts": {
+    "start": "tsc && node build/launch.js",
     "build": "tsc"
   },
   "repository": {
