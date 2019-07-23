@@ -150,7 +150,7 @@ export class PayPalSettlementEngine {
       url: `${urlName}/accounts/${this.clientId}/webhooks`,
       event_types: [
         {
-          name: 'PAYMENT.PAYOUTSBATCH.SUCCESS'
+          name: 'PAYMENT.PAYOUTS-ITEM.SUCCEEDED'
         }
       ]
     }
@@ -230,6 +230,7 @@ export class PayPalSettlementEngine {
   private async handleTransaction (ctx: Koa.Context) {
     const { body } = ctx.request
     console.log(body)
+    // TODO: Add webhook verification
   }
 
   public async start () {
