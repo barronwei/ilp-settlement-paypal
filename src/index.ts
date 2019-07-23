@@ -2,6 +2,7 @@ import * as PayPal from 'paypal-rest-sdk'
 import * as Koa from 'koa'
 import * as Router from 'koa-router'
 import * as bodyParser from 'koa-bodyparser'
+import * as ngrok from 'ngrok'
 import * as ioredis from 'ioredis'
 import axios from 'axios'
 import { Server } from 'net'
@@ -109,48 +110,6 @@ export class PayPalSettlementEngine {
     this.app.use(this.router.routes())
   }
 
-  public async start () {
-    console.log('Starting to listen on', this.port)
-    this.server = this.app.listen(Number(this.port), this.host)
-
-    // PayPal
-    console.log(`Starting PayPal in ${this.mode} mode!`)
-    PayPal.configure({
-      mode: this.mode,
-      client_id: this.clientId,
-      client_secret: this.secret
-    })
-
-    // Webhooks
-    await this.subscribeToTransactions()
-  }
-
-  public async close () {
-    console.log('Shutting down!')
-    this.server.close()
-  }
-
-  private async subscribeToTransactions () {
-    const url = `https://${this.host}:${this.port}/accounts/${
-      this.clientId
-    }/webhooks`
-    const webhooks = {
-      url,
-      event_types: [
-        {
-          name: 'PAYMENT.PAYOUTSBATCH.SUCCESS'
-        }
-      ]
-    }
-    PayPal.notification.webhook.create(webhooks, (err, res) => {
-      if (res) {
-        console.log(`Initiated webhooks to listening at ${webhooks.url}`)
-      } else {
-        console.error(`Failed to start webhooks at ${webhooks.url}`, err)
-      }
-    })
-  }
-
   async findAccountMiddleware (ctx: Koa.Context, next: () => Promise<any>) {
     const { params, prefix, redis } = ctx
     const account = await redis.get(`${prefix}:accounts:${params.id}`)
@@ -179,15 +138,33 @@ export class PayPalSettlementEngine {
     )
 
     // Webhooks
-    this.router.post(
-      '/accounts/:id/webhooks',
-      this.findAccountMiddleware,
-      this.handleTransaction
-    )
+    this.router.post('/accounts/:id/webhooks', this.handleTransaction)
+  }
+
+  private async subscribeToTransactions () {
+    const urlName =
+      this.host === DEFAULT_HOST
+        ? await ngrok.connect(this.port)
+        : `https://${this.host}:${this.port}`
+    const webhooks = {
+      url: `${urlName}/accounts/${this.clientId}/webhooks`,
+      event_types: [
+        {
+          name: 'PAYMENT.PAYOUTSBATCH.SUCCESS'
+        }
+      ]
+    }
+    PayPal.notification.webhook.create(webhooks, (err, res) => {
+      if (res) {
+        console.log(`Initiated webhooks to listening at ${webhooks.url}`)
+      } else {
+        console.error(`Failed to start webhooks at ${webhooks.url}`, err)
+      }
+    })
   }
 
   async getPaymentDetails (accountId: string) {
-    const url = `${this.connectorUrl}\\accounts\\${accountId}\\messages`
+    const url = `${this.connectorUrl}/accounts/${accountId}/messages`
     const message = {
       type: 'paymentDetails'
     }
@@ -246,7 +223,35 @@ export class PayPalSettlementEngine {
     }
   }
 
-  private async handleTransaction (tx: any) {
-    console.log(tx)
+  async notifySettlement (accountId: string, cents: string) {
+    console.log(accountId, cents)
+  }
+
+  private async handleTransaction (ctx: Koa.Context) {
+    const { body } = ctx.request
+    console.log(body)
+  }
+
+  public async start () {
+    console.log('Starting to listen on', this.port)
+    this.server = this.app.listen(Number(this.port), this.host)
+
+    // PayPal
+    console.log(`Starting PayPal in ${this.mode} mode!`)
+    PayPal.configure({
+      mode: this.mode,
+      client_id: this.clientId,
+      client_secret: this.secret
+    })
+
+    // Webhooks
+    await this.subscribeToTransactions()
+  }
+
+  public async close () {
+    console.log('Shutting down!')
+    this.host === DEFAULT_HOST
+      ? await Promise.all([ngrok.disconnect(), this.server.close()])
+      : this.server.close()
   }
 }
