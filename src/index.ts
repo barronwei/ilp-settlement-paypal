@@ -8,7 +8,6 @@ import axios from 'axios'
 import { Server } from 'net'
 import { Account } from './models/account'
 import { v4 as uuidv4 } from 'uuid'
-
 import {
   create as createAccount,
   search as searchAccount,
@@ -102,6 +101,7 @@ export class PayPalSettlementEngine {
     this.app.context.redis = this.redis
     this.app.context.ppEmail = this.ppEmail
     this.app.context.prefix = this.prefix
+    this.app.context.settleAccount = this.settleAccount.bind(this)
 
     // Routes
 
@@ -146,7 +146,7 @@ export class PayPalSettlementEngine {
       this.host === DEFAULT_HOST
         ? await ngrok.connect(this.port)
         : `https://${this.host}:${this.port}`
-    const webhooks = {
+    const webhook = {
       url: `${urlName}/accounts/${this.clientId}/webhooks`,
       event_types: [
         {
@@ -154,11 +154,11 @@ export class PayPalSettlementEngine {
         }
       ]
     }
-    PayPal.notification.webhook.create(webhooks, (err, res) => {
+    PayPal.notification.webhook.create(webhook, (err, res) => {
       if (res) {
-        console.log(`Initiated webhooks to listening at ${webhooks.url}`)
+        console.log(`Initiated webhooks to listening at ${webhook.url}`)
       } else {
-        console.error(`Failed to start webhooks at ${webhooks.url}`, err)
+        console.error(`Failed to start webhooks at ${webhook.url}`, err)
       }
     })
   }
@@ -168,34 +168,29 @@ export class PayPalSettlementEngine {
     const message = {
       type: 'paymentDetails'
     }
-    const details = await axios.post(
-      url,
-      Buffer.from(JSON.stringify(message)),
-      {
-        timeout: 10000,
-        headers: {
-          'Content-type': 'application/octet-stream',
-          'Idempotency-Key': uuidv4()
-        }
+    const res = await axios.post(url, Buffer.from(JSON.stringify(message)), {
+      timeout: 10000,
+      headers: {
+        'Content-type': 'application/octet-stream',
+        'Idempotency-Key': uuidv4()
       }
-    )
-    return details.data
+    })
+    return res.data
   }
 
   async settleAccount (account: Account, cents: string) {
-    const { id, ppEmail } = account
+    const { id } = account
     console.log(`Attempting to send ${cents} cents to account: ${id}`)
     try {
       const details = await this.getPaymentDetails(id).catch(err => {
         console.error('Error getting payment details from counterparty', err)
         throw err
       })
-      const { ppEmail, destinationTag } = details
       const payment = {
         sender_batch_header: {
           sender_batch_id: uuidv4(),
-          email_subject: `ILP Settlement from ${this.ppEmail}`,
-          email_message: `Payout of ${cents} cents under ${destinationTag}!`
+          email_subject: `ILP Settlement from ${this.ppEmail}!`,
+          email_message: `Payout of ${cents} cents!`
         },
         items: [
           {
@@ -204,10 +199,8 @@ export class PayPalSettlementEngine {
               value: cents,
               currency: this.currency
             },
-            note: `Settlement from ${
-              this.ppEmail
-            } to ${ppEmail} (${destinationTag})`,
-            receiver: ppEmail
+            note: `Settlement from ${this.ppEmail} to ${details}!`,
+            receiver: details
           }
         ]
       }
@@ -219,7 +212,7 @@ export class PayPalSettlementEngine {
         }
       })
     } catch (err) {
-      console.error(`Settlement to ${ppEmail} for ${cents} cents failed:`, err)
+      console.error(`Settlement to ${id} for ${cents} cents failed:`, err)
     }
   }
 
