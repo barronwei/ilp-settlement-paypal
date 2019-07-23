@@ -6,7 +6,7 @@ export async function create (ctx: Context) {
   const accJSON = await redis.get(`${prefix}:accounts:${params.id}`)
   const account = JSON.parse(accJSON)
 
-  const body = request.body
+  const { body } = request
   const amnt = normalizeAsset(body.scale, assetScale, BigInt(body.amnt))
   await ctx.settleAccount(account, amnt.toString())
 
