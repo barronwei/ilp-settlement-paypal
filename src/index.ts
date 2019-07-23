@@ -138,7 +138,9 @@ export class PayPalSettlementEngine {
     )
 
     // Webhooks
-    this.router.post('/accounts/:id/webhooks', this.handleTransaction)
+    this.router.post('/accounts/:id/webhooks', ctx =>
+      this.handleTransaction(ctx)
+    )
   }
 
   private async subscribeToTransactions () {
