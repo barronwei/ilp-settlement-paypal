@@ -2,14 +2,20 @@
 
 This repository houses an implementation of an ILP settlement engine for PayPal!
 
-Due to the limitations of the PayPal REST SDK, this settlement engine requires transactions to occur between business accounts. In order to listen for payments, this engine requires manual configuration of a https link for Instant Payment Notifications. In order to run on localhost, this engine utilizes `ngrok`. 
+Due to the limitations of `paypal-rest-sdk`, this settlement engine requires transactions to occur between business accounts. In order to listen for payments, this engine requires manual configuration of a https link for Instant Payment Notifications. In order to run on localhost, this engine utilizes `ngrok`. 
 
-## Getting Started
+## Usage
 
-Create an application on https://developer.paypal.com in `live` or `sandbox` mode. Configure `launch.ts` with the PayPal email, id, and secret corresponding with the application. In the settings of the PayPal business account, add the following endpoint url to listen for Instant Payment Notifications: ```https://${host_name}/{client_id}/ipn``` 
+Create a PayPal application in `live` or `sandbox` mode on developer site. Configure `launch.ts` with the corresponding PayPal email, id, and secret of the application.
 
-With that, run `npm run start` to launch the settlement engine or `npm run debug` to do so with additional console logging.
+In the settings of the PayPal business account, add the endpoint url that listens for Instant Payment Notifications. The url should be in the following format:
 
-### Prerequisites
+```
+{host}/{id}/ipn
+```
 
-A PayPal business account is required. Feel 
+With that in place, run `npm run start` to launch this settlement engine or run `npm run debug` to do so with additional console logging.
+
+## Contributing
+
+Pull requests are welcome. Please fork the repository and submit!
