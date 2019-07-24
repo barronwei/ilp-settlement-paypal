@@ -12,13 +12,11 @@ Create a PayPal application in live or sandbox mode on developer site. Configure
 https://{hostname}/{clientid}/ipn
 ```
 
-To launch this settlement engine, run:
+To launch this settlement engine, run one of the following:
 
 ```
 npm run start
 ```
-
-To do so with additional logging, run:
 
 ```
 npm run debug
