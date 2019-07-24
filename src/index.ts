@@ -261,7 +261,7 @@ export class PayPalSettlementEngine {
         timeout: 10000
       })
       .catch(err => {
-        console.error('Failed to notify counterparty of settlement:', err)
+        console.error('Failed to notify connector of settlement:', err)
       })
   }
 
