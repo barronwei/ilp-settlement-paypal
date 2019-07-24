@@ -4,6 +4,7 @@ import * as Router from 'koa-router'
 import * as bodyParser from 'koa-bodyparser'
 import * as ngrok from 'ngrok'
 import * as ioredis from 'ioredis'
+import * as toCamel from 'camelcase-keys'
 import axios from 'axios'
 import { Server } from 'net'
 import { Account } from './models/account'
@@ -101,6 +102,7 @@ export class PayPalSettlementEngine {
     this.app.context.redis = this.redis
     this.app.context.ppEmail = this.ppEmail
     this.app.context.prefix = this.prefix
+    this.app.context.assetScale = this.assetScale
     this.app.context.settleAccount = this.settleAccount.bind(this)
 
     // Routes
@@ -224,8 +226,23 @@ export class PayPalSettlementEngine {
 
   private async handleTransaction (ctx: Koa.Context) {
     const { body } = ctx.request
-    console.log(body)
+    const tx = toCamel(body)
+    const { eventType }: any = tx
     // TODO: Add webhook verification
+    switch (eventType) {
+      case 'PAYMENT.PAYOUTS-ITEM.SUCCEEDED':
+        const info = toCamel(body.resource, { deep: true })
+        const { transactionStatus, payoutItem }: any = info
+        switch (transactionStatus) {
+          case 'SUCCESS':
+            const { amount, receiver } = payoutItem
+            return
+          default:
+            throw new Error(`Unsuccessful transaction!`)
+        }
+      default:
+        throw new Error(`Handler received incorrect webhook: ${eventType}!`)
+    }
   }
 
   public async start () {
