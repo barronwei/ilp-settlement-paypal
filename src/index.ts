@@ -254,7 +254,7 @@ export class PayPalSettlementEngine {
     const url = `${this.connectorUrl}\\accounts\\${accountId}\\settlement`
     const message = {
       amount,
-      scale: 6
+      scale: this.assetScale
     }
     const res = await axios
       .post(url, message, {
