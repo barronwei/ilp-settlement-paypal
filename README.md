@@ -2,7 +2,7 @@
 
 This repository houses an implementation of an ILP settlement engine for PayPal!
 
-Due to the limitations of `paypal-rest-sdk`, this settlement engine requires transactions to occur between PayPal business accounts. In order to listen for payments, this engine requires manual configuration of an endpoint for Instant Payment Notifications.
+Due to the limitations of `paypal-rest-sdk`, this settlement engine requires transactions to occur between PayPal business accounts. In order to listen for payments, this engine requires manual configuration of account settings to include an endpoint for Instant Payment Notifications.
 
 ## Usage
 
