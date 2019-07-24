@@ -11,7 +11,7 @@ Create a PayPal application in `live` or `sandbox` mode on developer site. Confi
 In the settings of the PayPal business account, add the endpoint url that listens for Instant Payment Notifications. The url should be in the following format:
 
 ```
-{host}/{id}/ipn
+https://{host}/{id}/ipn
 ```
 
 With that in place, run `npm run start` to launch this settlement engine or run `npm run debug` to do so with additional console logging.
