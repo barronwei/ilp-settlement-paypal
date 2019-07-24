@@ -15,7 +15,7 @@ const LEDGER_SECRET = process.env.LEDGER_SECRET || ''
 
 const LEDGER_PREFIX = process.env.LEDGER_PREFIX || 'paypal'
 const LEDGER_ASSET_SCALE = process.env.LEDGER_ASSET_SCALE || 2
-const LEDGER_MIN_CENTS = process.env.LEDGER_MIN_SCENTS || 1000000
+const LEDGER_MIN_CENTS = process.env.LEDGER_MIN_CENTS || 1000000
 const LEDGER_CURRENCY = process.env.LEDGER_CURRENCY || 'USD'
 
 const config: PayPalEngineConfig = {
