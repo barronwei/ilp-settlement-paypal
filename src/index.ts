@@ -7,8 +7,9 @@ import * as ioredis from 'ioredis'
 import * as toCamel from 'camelcase-keys'
 import axios from 'axios'
 import { Server } from 'net'
-import { Account } from './models/account'
 import { v4 as uuidv4 } from 'uuid'
+
+import { Account } from './models/account'
 import {
   create as createAccount,
   search as searchAccount,
