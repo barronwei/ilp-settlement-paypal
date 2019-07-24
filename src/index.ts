@@ -106,7 +106,6 @@ export class PayPalSettlementEngine {
     this.app.context.settleAccount = this.settleAccount.bind(this)
 
     // Routes
-
     this.router = new Router()
     this.setupRoutes()
     this.app.use(this.router.routes())
@@ -141,7 +140,12 @@ export class PayPalSettlementEngine {
 
     // Webhooks
     this.router.post('/accounts/:id/webhooks', ctx =>
-      this.handleTransaction(ctx)
+      this.handleOutgoingTransaction(ctx)
+    )
+
+    // Instant Payment Notifications
+    this.router.post('/accounts/:id/ipn', ctx =>
+      this.handleIncomingTransaction(ctx)
     )
   }
 
@@ -168,7 +172,7 @@ export class PayPalSettlementEngine {
   }
 
   async getPaymentDetails (accountId: string) {
-    const url = `${this.connectorUrl}/accounts/${accountId}/messages`
+    const url = `${this.connectorUrl}\\accounts\\${accountId}\\messages`
     const message = {
       type: 'paymentDetails'
     }
@@ -190,12 +194,13 @@ export class PayPalSettlementEngine {
         console.error('Error getting payment details from counterparty', err)
         throw err
       })
+      const { ppEmail, tag } = details
       const value = Number(cents) / 10 ** this.assetScale
       const payment = {
         sender_batch_header: {
           sender_batch_id: uuidv4(),
-          email_subject: `ILP Settlement from ${this.ppEmail}!`,
-          email_message: `Payout of ${cents} cents!`
+          email_subject: `Payout of ${cents} cents!`,
+          email_message: tag
         },
         items: [
           {
@@ -204,8 +209,8 @@ export class PayPalSettlementEngine {
               value,
               currency: this.currency
             },
-            note: id,
-            receiver: details
+            note: `ILP Settlement from ${id}!`,
+            receiver: ppEmail
           }
         ]
       }
@@ -221,31 +226,76 @@ export class PayPalSettlementEngine {
     }
   }
 
-  async notifySettlement (accountId: string, cents: string) {
-    const url = `${this.connectorUrl}/accounts/${accountId}/settlement`
-  }
-
-  private async handleTransaction (ctx: Koa.Context) {
+  private async handleOutgoingTransaction (ctx: Koa.Context) {
     const { body } = ctx.request
     const tx = toCamel(body)
+    // TODO: Webhook Verification
     const { eventType }: any = tx
-    // TODO: Add webhook verification
     switch (eventType) {
       case 'PAYMENT.PAYOUTS-ITEM.SUCCEEDED':
         const info = toCamel(body.resource, { deep: true })
         const { transactionStatus, payoutItem }: any = info
         switch (transactionStatus) {
           case 'SUCCESS':
-            const { amount, note, receiver } = payoutItem
+            const { amount, receiver } = payoutItem
             const cents = Number(amount.value) * 10 ** this.assetScale
-            console.log(`${receiver} successfully received ${cents} cents!`)
-            await this.notifySettlement(note, cents.toString())
+            console.log(`${receiver} claimed settlement of ${cents} cents!`)
             return
           default:
             throw new Error(`Unsuccessful transaction!`)
         }
       default:
         throw new Error(`Handler received incorrect webhook: ${eventType}!`)
+    }
+  }
+
+  async notifySettlement (accountId: string, amount: string) {
+    const url = `${this.connectorUrl}\\accounts\\${accountId}\\settlement`
+    const message = {
+      amount,
+      scale: 6
+    }
+    const res = await axios
+      .post(url, message, {
+        timeout: 10000
+      })
+      .catch(err => {
+        console.error('Failed to notify counterparty of settlement:', err)
+      })
+  }
+
+  private async handleIncomingTransaction (ctx: Koa.Context) {
+    const { body } = ctx.request
+    const tx = toCamel(body)
+    // TODO: IPN Verification
+    const { txnType, mcGross, memo, paymentStatus }: any = tx
+    switch (txnType) {
+      case 'send_money':
+        switch (paymentStatus) {
+          case 'Completed':
+            try {
+              const accountId = await this.redis.get(
+                `${this.prefix}:tag:${memo}:accountId`
+              )
+              const accJSON = await this.redis.get(
+                `${this.prefix}:accounts:${accountId}`
+              )
+              if (accJSON) {
+                const acc = JSON.parse(accJSON)
+                const cents = Number(mcGross) * 10 ** this.assetScale
+                await this.notifySettlement(acc.id, cents.toString())
+                console.log(`Credits ${acc.id} with ${cents} cents!`)
+              }
+            } catch (err) {
+              console.error('Failed to find account under', memo, err)
+            }
+            return
+          default:
+            console.log(`IPN handler received an incomplete payment.`)
+        }
+        return
+      default:
+        console.log(`IPN handler received a type ${txnType} payment.`)
     }
   }
 
