@@ -190,6 +190,7 @@ export class PayPalSettlementEngine {
         console.error('Error getting payment details from counterparty', err)
         throw err
       })
+      const value = Number(cents) / 10 ** this.assetScale
       const payment = {
         sender_batch_header: {
           sender_batch_id: uuidv4(),
@@ -200,10 +201,10 @@ export class PayPalSettlementEngine {
           {
             recipient_type: 'EMAIL',
             amount: {
-              value: cents,
+              value,
               currency: this.currency
             },
-            note: `Settlement from ${this.ppEmail} to ${details}!`,
+            note: id,
             receiver: details
           }
         ]
@@ -221,7 +222,7 @@ export class PayPalSettlementEngine {
   }
 
   async notifySettlement (accountId: string, cents: string) {
-    console.log(accountId, cents)
+    const url = `${this.connectorUrl}/accounts/${accountId}/settlement`
   }
 
   private async handleTransaction (ctx: Koa.Context) {
@@ -235,7 +236,10 @@ export class PayPalSettlementEngine {
         const { transactionStatus, payoutItem }: any = info
         switch (transactionStatus) {
           case 'SUCCESS':
-            const { amount, receiver } = payoutItem
+            const { amount, note, receiver } = payoutItem
+            const cents = Number(amount.value) * 10 ** this.assetScale
+            console.log(`${receiver} successfully received ${cents} cents!`)
+            await this.notifySettlement(note, cents.toString())
             return
           default:
             throw new Error(`Unsuccessful transaction!`)
