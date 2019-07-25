@@ -1,7 +1,6 @@
 import 'mocha'
 import * as chai from 'chai'
 import * as sinon from 'sinon'
-import * as PayPal from 'paypal-rest-sdk'
 import axios from 'axios'
 import { getLocal, Mockttp } from 'mockttp'
 import { randomBytes } from 'crypto'
@@ -75,6 +74,7 @@ describe('Messages', function () {
       tag
     })
   })
+
   it('Returns correct payment details if previously set', async () => {
     await engine.redis.set(
       `${engine.prefix}:accounts:${testAccount.id}`,

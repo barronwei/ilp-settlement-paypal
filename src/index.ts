@@ -21,6 +21,8 @@ import { create as createSettlement } from './controllers/settlement'
 const DEFAULT_HOST = 'localhost'
 const DEFAULT_PORT = 3000
 
+const DEFAULT_CONNECTOR_URL = 'http://localhost:7771'
+
 const DEFAULT_REDIS_PORT = 6379
 
 // PayPal SDK mode
@@ -36,7 +38,7 @@ export interface PayPalEngineConfig {
   port?: number
   mode?: string
 
-  connectorUrl: string
+  connectorUrl?: string
 
   redisPort?: number
   redis?: ioredis.Redis
@@ -86,7 +88,7 @@ export class PayPalSettlementEngine {
     this.port = config.port || DEFAULT_PORT
     this.mode = config.mode || DEFAULT_MODE
 
-    this.connectorUrl = config.connectorUrl
+    this.connectorUrl = config.connectorUrl || DEFAULT_CONNECTOR_URL
 
     this.redisPort = config.redisPort || DEFAULT_REDIS_PORT
     this.redis = config.redis || new ioredis(this.redisPort)
@@ -241,11 +243,14 @@ export class PayPalSettlementEngine {
             const { amount, receiver } = payoutItem
             const cents = Number(amount.value) * 10 ** this.assetScale
             console.log(`${receiver} claimed settlement of ${cents} cents!`)
+            ctx.body = 200
             return
           default:
+            ctx.body = 404
             throw new Error(`Unsuccessful transaction!`)
         }
       default:
+        ctx.body = 404
         throw new Error(`Handler received incorrect webhook: ${eventType}!`)
     }
   }
@@ -286,23 +291,27 @@ export class PayPalSettlementEngine {
                 const cents = Number(mcGross) * 10 ** this.assetScale
                 await this.notifySettlement(acc.id, cents.toString())
                 console.log(`Credits ${acc.id} with ${cents} cents!`)
+                ctx.body = 200
               }
             } catch (err) {
               console.error('Failed to find account under', memo, err)
+              ctx.body = 404
             }
             return
           default:
+            ctx.body = 404
             console.log(`IPN handler received an incomplete payment.`)
         }
         return
       default:
+        ctx.body = 404
         console.log(`IPN handler received a type ${txnType} payment.`)
     }
   }
 
   public async start () {
     console.log('Starting to listen on', this.port)
-    this.server = this.app.listen(Number(this.port), this.host)
+    this.server = this.app.listen(this.port, this.host)
 
     // PayPal
     console.log(`Starting PayPal in ${this.mode} mode!`)
