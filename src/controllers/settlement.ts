@@ -7,7 +7,7 @@ export async function create (ctx: Context) {
   const account = JSON.parse(accJSON)
 
   const { body } = request
-  const amnt = normalizeAsset(body.scale, assetScale, BigInt(body.amnt))
+  const amnt = normalizeAsset(body.scale, assetScale, BigInt(body.amount))
   await ctx.settleAccount(account, amnt.toString())
 
   ctx.status = 200
