@@ -215,7 +215,7 @@ export class PayPalSettlementEngine {
           }
         ]
       }
-      PayPal.payout.create(payment, (err: any, pay: any) => {
+      PayPal.payout.create(payment, (err: PayPal.SDKError, pay: any) => {
         if (pay) {
           console.log('Created PayPal payment for approval:', pay)
         } else {
