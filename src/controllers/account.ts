@@ -13,10 +13,8 @@ export async function create (ctx: Context) {
       `${prefix}:accounts:${account.id}`,
       JSON.stringify(account)
     )
-    ctx.status = 200
-  } else {
-    ctx.status = 404
   }
+  ctx.status = 200
 }
 
 export async function search (ctx: Context) {
