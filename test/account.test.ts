@@ -1,9 +1,7 @@
 import 'mocha'
 import * as chai from 'chai'
 import * as sinon from 'sinon'
-import * as PayPal from 'paypal-rest-sdk'
 import axios from 'axios'
-
 import { PayPalSettlementEngine } from '../src'
 import { Account } from '../src/models/account'
 

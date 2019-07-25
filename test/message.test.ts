@@ -4,7 +4,6 @@ import * as sinon from 'sinon'
 import axios from 'axios'
 import { getLocal, Mockttp } from 'mockttp'
 import { randomBytes } from 'crypto'
-
 import { PayPalSettlementEngine } from '../src'
 import { Account } from '../src/models/account'
 
