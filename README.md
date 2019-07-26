@@ -6,7 +6,11 @@ Due to the limitations of `paypal-rest-sdk`, this settlement engine requires tra
 
 ## Usage
 
-Create a PayPal application in live or sandbox mode on developer site. Configure `launch.ts` with the corresponding PayPal email, id, and secret of the application. In the settings of the PayPal business account, add the endpoint url that listens for Instant Payment Notifications. The url follows this format: `https://{hostname}/{clientid}/ipn`.
+[Create](https://developer.paypal.com/developer/applications/create) a PayPal application in live or sandbox mode on the developer site.
+
+Configure `launch.ts` with the corresponding PayPal email, id, and secret of the application. 
+
+In the [settings](https://www.sandbox.paypal.com/businessmanage/settings/website) of the PayPal business account, add the endpoint url that listens for Instant Payment Notifications. The url is set to follow this format: `https://{hostname}/{clientid}/ipn`. Follow 
 
 To launch this settlement engine, run one of the following:
 
