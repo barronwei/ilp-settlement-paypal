@@ -21,12 +21,12 @@ import { create as createSettlement } from './controllers/settlement'
 const DEFAULT_HOST = 'localhost'
 const DEFAULT_PORT = 3000
 
+// PayPal SDK mode
+const DEFAULT_MODE = 'sandbox'
+
 const DEFAULT_CONNECTOR_URL = 'http://localhost:7771'
 
 const DEFAULT_REDIS_PORT = 6379
-
-// PayPal SDK mode
-const DEFAULT_MODE = 'sandbox'
 
 const DEFAULT_PREFIX = 'paypal'
 const DEFAULT_ASSET_SCALE = 2
