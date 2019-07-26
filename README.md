@@ -18,6 +18,16 @@ To launch, run:
 npm run start
 ```
 
+## Testing
+
+Utilize the PayPal [Webhook Simulator](https://developer.paypal.com/developer/webhooksSimulator/) to simulate `Payment payouts-item succeeded`, which this engine listens for. 
+
+In order to test the handling of an incoming transaction, create a separate business account in the same mode to send a payout to the account on the engine. Configure `pay.ts` at the top of the script, and run:
+
+```
+npm run build && node ./build/pay.js
+```
+
 ## Contributing
 
 Pull requests are welcome. Please fork the repository and submit!
